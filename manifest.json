@@ -1,18 +1,21 @@
 {
-  "name": "document-design-system",
+  "name": "Revolution 1",
   "id": "1494312549246051166",
   "api": "1.0.0",
-  "main": "code.js",
+  "main": "dist/code.js",
   "capabilities": [],
-  "enableProposedApi": false,
+  "enableProposedApi": true,
   "documentAccess": "dynamic-page",
   "editorType": [
     "figma"
   ],
-  "ui": "ui.html",
+  "ui": "dist/ui.html",
   "networkAccess": {
     "allowedDomains": [
       "none"
     ]
-  }
+  },
+  "permissions": [
+    "currentuser"
+  ]
 }

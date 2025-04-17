@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>Design System Documentation</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      margin: 0;
+      padding: 16px;
+    }
+
+    select {
+      width: 100%;
+      padding: 8px;
+      margin-bottom: 16px;
+      border: 1px solid #e5e5e5;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+
+    button {
+      width: 100%;
+      padding: 8px 16px;
+      background: #18A0FB;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+    }
+
+    button:disabled {
+      background: #cccccc;
+      cursor: not-allowed;
+    }
+
+    .preview {
+      margin-top: 16px;
+      display: none;
+    }
+
+    .preview.visible {
+      display: block;
+    }
+
+    .preview-title {
+      font-size: 12px;
+      color: #666;
+      margin-bottom: 8px;
+    }
+
+    .swatches {
+      display: flex;
+      gap: 8px;
+    }
+
+    .swatch {
+      width: 40px;
+      height: 40px;
+      border-radius: 4px;
+      border: 1px solid #e5e5e5;
+    }
+
+    .swatch-name {
+      font-size: 11px;
+      color: #666;
+      margin-top: 4px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 40px;
+    }
+  </style>
+</head>
+<body>
+  <select id="collection" disabled>
+    <option value="">Select a collection...</option>
+  </select>
+
+  <button id="generate" disabled>Generate Documentation</button>
+
+  <div class="preview">
+    <div class="preview-title">Preview (first 3 colors)</div>
+    <div class="swatches" id="swatches"></div>
+  </div>
+
+  <script>
+    // Get UI elements
+    const select = document.getElementById('collection');
+    const generateBtn = document.getElementById('generate');
+    const preview = document.querySelector('.preview');
+    const swatches = document.getElementById('swatches');
+
+    // Request collections list on load
+    window.onload = () => {
+      parent.postMessage({ pluginMessage: { type: 'list-collections' } }, '*');
+    };
+
+    // Handle collection selection
+    select.onchange = () => {
+      const collection = select.value;
+      generateBtn.disabled = !collection;
+      
+      if (collection) {
+        parent.postMessage({ 
+          pluginMessage: { 
+            type: 'preview-collection',
+            collectionName: collection 
+          } 
+        }, 'https://www.figma.com');
+      } else {
+        preview.classList.remove('visible');
+      }
+    };
+
+    // Handle generate button click
+    generateBtn.onclick = () => {
+      const collection = select.value;
+      if (collection) {
+        parent.postMessage({ 
+          pluginMessage: { 
+            type: 'generate-docs',
+            collectionName: collection 
+          } 
+        }, 'https://www.figma.com');
+      }
+    };
+
+    // Handle messages from the plugin
+    window.onmessage = (event) => {
+      // Verify the message origin
+      if (event.origin !== 'https://www.figma.com') {
+        return;
+      }
+
+      const msg = event.data.pluginMessage;
+      if (!msg) return;
+
+      if (msg.type === 'collections') {
+        // Populate collections dropdown
+        select.innerHTML = `
+          <option value="">Select a collection...</option>
+          ${msg.data.map(name => `<option value="${name}">${name}</option>`).join('')}
+        `;
+        select.disabled = false;
+      }
+
+      if (msg.type === 'preview-tokens') {
+        // Show color previews
+        swatches.innerHTML = msg.data.map(token => `
+          <div>
+            <div class="swatch" style="background: ${Object.values(token.values)[0]}"></div>
+            <div class="swatch-name">${token.name.split('.').pop()}</div>
+          </div>
+        `).join('');
+        preview.classList.add('visible');
+      }
+    };
+  </script>
+</body>
+</html>
